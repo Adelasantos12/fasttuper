@@ -1,0 +1,99 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  name         String?
+  phone        String?
+  passwordHash String
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  roles        UserRole[]
+  customerProfile CustomerProfile?
+  addresses    Address[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Role {
+  id    Int        @id @default(autoincrement())
+  name  String     @unique // 'ADMIN', 'CHEF', 'NUTRITIONIST', 'DRIVER', 'VENDOR', 'CUSTOMER'
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+  user   User @relation(fields: [userId], references: [id])
+  role   Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model CustomerProfile {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id])
+  caloriesTarget  Int?
+  goal            String?
+  restrictions    String[]
+  allergens       String[]
+  dislikes        String[]
+  notes           String?
+
+  defaultAddressId Int?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("customer_profiles")
+}
+
+model Address {
+  id                  Int     @id @default(autoincrement())
+  userId              Int
+  user                User    @relation(fields: [userId], references: [id])
+  label               String  // 'Home', 'Office'
+  street              String
+  colonia             String?
+  city                String?
+  zipCode             String?
+  geoLat              Float?
+  geoLng              Float?
+  deliveryInstructions String?
+
+  isDefault           Boolean @default(false)
+
+  @@map("addresses")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
