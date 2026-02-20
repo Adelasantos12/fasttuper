@@ -11,6 +11,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "start": "turbo run start",
+    "start:frontend": "npm run start --workspace=frontend",
     "clean": "turbo run clean"
   },
   "devDependencies": {
